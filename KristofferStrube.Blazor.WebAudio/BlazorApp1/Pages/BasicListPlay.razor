@@ -1,0 +1,89 @@
+﻿@page "/basiclistplay"
+@using System.Globalization
+@rendermode InteractiveWebAssembly
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>Basic Play</PageTitle>
+
+<h1>Blazor.WebAudioのラッパーテスト</h1>
+
+<div style="user-select:none;display:flex;flex-direction:column;" aria-label="Player controls">
+    @if (_player != null)
+    {
+        @foreach (var key in _player.Keys.OrderBy(key => int.Parse(key)))
+        {
+            <button class="media-control btn btn-outline-primary" aria-label="Play" @onclick="() => PlayOrStop(key)">
+                @if (key == PlayingKey)
+                {
+                    @* <i class="bi bi-stop-circle-fill"></i> *@
+                    <i class="bi bi-stop-circle"></i>
+                }
+                else
+                {
+                    @* <i class="bi bi-play-circle-fill"></i> *@
+                    <i class="bi bi-volume-up"></i>
+                }
+            </button>
+        }
+    }
+</div>
+
+@code {
+    private BasicListPlayer _player = default!;
+    private string? PlayingKey = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _player = new BasicListPlayer(JSRuntime);
+            _player.Ended += OnAudioEnded;
+            await _player.EnsureInitializedAsync();
+
+            var files = new List<string>() { ".sound/yamaha-psr-16-demo-music-25226.mp3", ".sound/-226232.mp3", ".sound/chime-sound-7143.mp3" };
+            var htpClient = new HttpClient();
+            htpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+            for (int i = 0; i < files.Count; i++)
+            {
+                var bytes = await htpClient.GetByteArrayAsync(files[i]);
+                _player.UpdateOrAdd(i.ToString(CultureInfo.InvariantCulture), bytes);
+            }
+
+        }
+        catch
+        {
+            Console.WriteLine("Couldn't initialize yet.");
+        }
+    }
+
+    private void OnAudioEnded(string key)
+    {
+        Console.WriteLine($"停止したKey:{key}");
+        PlayingKey = null;
+        StateHasChanged();
+    }
+
+    public async Task PlayOrStop(string key)
+    {
+        if (key != PlayingKey)
+        {
+            await _player.StartAsync(key);
+            PlayingKey = key;
+        }
+        else
+        {
+            //再生中の場合、停止
+            await _player.StopAsync();
+            PlayingKey = null;
+        }
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_player != null)
+            await _player.DisposeAsync();
+    }
+}

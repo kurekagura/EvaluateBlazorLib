@@ -1,8 +1,68 @@
 ﻿using KristofferStrube.Blazor.DOM;
 using KristofferStrube.Blazor.WebAudio;
 using Microsoft.JSInterop;
+using System.Collections.Concurrent;
 
 namespace BlazorApp1;
+
+public class BasicListPlayer
+{
+    private string? _playingIndex = null;
+    private readonly ConcurrentDictionary<string, byte[]> _dict = new();
+    private readonly BasicPlayer _player;
+
+    public event Action<string>? Ended;
+
+    public BasicListPlayer(IJSRuntime jsRuntime)
+    //: base(jsRuntime)
+    {
+        _player = new BasicPlayer(jsRuntime);
+        _player.Ended += OnInternalAudioEnded;
+    }
+
+    private void OnInternalAudioEnded()
+    {
+        string endedInex = _playingIndex!;
+        _playingIndex = null;
+        Ended?.Invoke(endedInex);
+    }
+
+    public async Task EnsureInitializedAsync()
+    {
+        await _player.EnsureInitializedAsync();
+    }
+
+    public IEnumerable<string> Keys => _dict.Keys;
+
+    public void UpdateOrAdd(string key, byte[] value)
+    {
+        _dict[key] = value; // キーが存在すれば更新、存在しなければ追加
+    }
+
+    public async Task StartAsync(string index)
+    {
+        await _player.StopAsync();
+        //_player.StopAsync().GetAwaiter().GetResult();
+
+        //_playingIndex = null;
+        await _player.SetSoundAsync(_dict[index]);
+        await _player.StartAsync();
+        _playingIndex = index;
+    }
+
+    public async Task StopAsync()
+    {
+        if (_playingIndex == null)
+            return;
+
+        await _player.StopAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _player.DisposeAsync();
+    }
+}
 
 public class BasicPlayer
 {
