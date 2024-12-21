@@ -1,0 +1,85 @@
+﻿@page "/basicplay"
+@rendermode InteractiveWebAssembly
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>Basic Play</PageTitle>
+
+<h1>Blazor.WebAudioのラッパーテスト</h1>
+
+<div>
+    <span>ProcessArchitecture:</span>
+    <span>@System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture</span>
+</div>
+
+<div style="user-select: none;display:flex;flex-direction:row;" aria-label="Player controls">
+    @if (IsPlaying)
+    {
+        <button class="media-control" aria-label="Pause" @onclick=Stop>⏸</button>
+    }
+    else
+    {
+        <button class="media-control" aria-label="Play" @onclick=Play>⏯</button>
+    }
+</div>
+
+@code {
+    private BasicPlayer _player = default!;
+    private bool IsPlaying = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _player = new BasicPlayer(JSRuntime);
+            _player.Ended += OnAudioEnded;
+            await _player.EnsureInitializedAsync();
+        }
+        catch
+        {
+            Console.WriteLine("Couldn't initialize yet.");
+        }
+    }
+
+    private void OnAudioEnded()
+    {
+        IsPlaying = false;
+        StateHasChanged();
+    }
+
+
+    // private string _mp3 = ".sound/yamaha-psr-16-demo-music-25226.mp3";
+    private string _mp3 = ".sound/-226232.mp3";
+
+    public async Task Play()
+    {
+        if (_player.IsPlaying)
+            return;
+
+        await _player.EnsureInitializedAsync();
+
+        var htpClient = new HttpClient();
+        htpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        await _player.SetSoundAsync(await htpClient.GetByteArrayAsync(_mp3));
+        await _player.StartAsync();
+
+        IsPlaying = _player.IsPlaying;
+    }
+
+    public async Task Stop()
+    {
+        if (!_player.IsPlaying)
+            return;
+
+        await _player.StopAsync();
+        //IsPlaying = _player.IsPlaying;
+        //StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_player != null)
+            await _player.DisposeAsync();
+    }
+}

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\.lib\bootstrap\css\bootstrap.css" />
+    <Content Include="wwwroot\.lib\bootstrap\css\bootstrap.min.css" />
+    <Content Include="wwwroot\.sound\-226232.mp3" />
+    <Content Include="wwwroot\.sound\yamaha-psr-16-demo-music-25226.mp3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\.lib\bootstrap\js\bootstrap.js" />
+    <None Include="wwwroot\.lib\bootstrap\js\bootstrap.min.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KristofferStrube.Blazor.WebAudio" Version="0.1.0-alpha.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.5" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
