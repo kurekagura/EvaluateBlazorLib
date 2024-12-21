@@ -3,7 +3,7 @@ using KristofferStrube.Blazor.WebAudio;
 using Microsoft.JSInterop;
 using System.Collections.Concurrent;
 
-namespace BlazorApp1;
+namespace BlazorApp1.Components;
 
 public class BasicListPlayer
 {
@@ -66,14 +66,13 @@ public class BasicListPlayer
 
 public class BasicPlayer
 {
-    private AudioContext _audCtxt = default!;
+    private AudioContext _audCtx = default!;
     private AudioDestinationNode _audDstNode = default!;
     private AudioBuffer _audBuff = default!;
     private AudioBufferSourceNode _audBuffSrcNode = default!;
 
     private readonly IJSRuntime _jsRT;
     private bool _playing = false;
-    //private bool _trackLoaded = false;
 
     public event Action? Ended;
 
@@ -90,11 +89,11 @@ public class BasicPlayer
 
     public async Task EnsureInitializedAsync()
     {
-        if (_audCtxt is not null)
+        if (_audCtx is not null)
             return;
 
-        _audCtxt = await AudioContext.CreateAsync(_jsRT);
-        _audDstNode = await _audCtxt.GetDestinationAsync();
+        _audCtx = await AudioContext.CreateAsync(_jsRT);
+        _audDstNode = await _audCtx.GetDestinationAsync();
     }
 
     public async Task SetSoundAsync(byte[] audioBytes)
@@ -103,7 +102,7 @@ public class BasicPlayer
         if (_audBuff is not null)
             await _audBuff.DisposeAsync();
 
-        _audBuff = await _audCtxt.DecodeAudioDataAsync(audioBytes);
+        _audBuff = await _audCtx.DecodeAudioDataAsync(audioBytes);
     }
 
     public async Task StartAsync()
@@ -115,16 +114,13 @@ public class BasicPlayer
         if (_audBuff is null) return;
 
         //再生時には以下の３コールが必要
-        _audBuffSrcNode = await _audCtxt.CreateBufferSourceAsync();
+        _audBuffSrcNode = await _audCtx.CreateBufferSourceAsync();
         await _audBuffSrcNode.SetBufferAsync(_audBuff);
         await _audBuffSrcNode.ConnectAsync(_audDstNode);
 
         await using EventListener<Event> endedListener = await EventListener<Event>.CreateAsync(_jsRT, e =>
         {
-            Console.WriteLine(e);
-
             _playing = false;
-            //IsPlaying = false;
             Ended?.Invoke();
         });
         await _audBuffSrcNode.AddOnEndedEventListenerAsync(endedListener);
@@ -161,8 +157,8 @@ public class BasicPlayer
         //_audBuffは_audCtxtがHAS
         if (_audBuff is not null)
             await _audBuff.DisposeAsync();
-        if (_audCtxt is not null)
-            await _audCtxt.DisposeAsync();
+        if (_audCtx is not null)
+            await _audCtx.DisposeAsync();
     }
 
 }

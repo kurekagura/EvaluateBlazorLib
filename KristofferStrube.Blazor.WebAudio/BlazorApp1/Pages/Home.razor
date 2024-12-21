@@ -1,7 +1,72 @@
 ﻿@page "/"
 
+@inject IMediaDevicesService MediaDevicesService
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+@using BlazorApp1.Components
+@using KristofferStrube.Blazor.MediaCaptureStreams
+
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Blazor.WebAudioの確認サンプル</h1>
 
-Welcome to your new app.
+<button class="media-control btn btn-outline-primary" aria-label="Play" @onclick="RecordOrStop">
+    @if (IsRecording)
+    {
+        <i class="bi bi-stop-circle"></i>
+    }
+    else
+    {
+        <i class="bi bi-mic"></i>
+    }
+</button>
+
+@code {
+    private bool IsRecording = false;
+    private BasicAudioRecorder _recorder = null!;
+
+    private BasicPlayer _player = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"window.getFloat32Array = (array) => { return Array.from(array); };");
+            var mediaDevices = await MediaDevicesService.GetMediaDevicesAsync();
+            _recorder = new BasicAudioRecorder(JSRuntime, mediaDevices);
+            await _recorder.EnsureInitializedAsync();
+
+            _player = new BasicPlayer(JSRuntime);
+            await _player.EnsureInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Unexpected exeption occured.{0}", ex.Message);
+        }
+    }
+
+    public async Task RecordOrStop()
+    {
+        if (!IsRecording)
+        {
+            await _recorder.StartAsync();
+            IsRecording = true;
+        }
+        else
+        {
+            //TODO: プログレス表示・不活性
+            var wavBytes = await _recorder.StopAsync();
+            IsRecording = false;
+            await _player.SetSoundAsync(wavBytes);
+            await _player.StartAsync();         
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_recorder != null)
+            await _recorder.DisposeAsync();
+
+        await JSRuntime.InvokeVoidAsync("eval", @"delete window.getFloat32Array;");
+    }
+}
