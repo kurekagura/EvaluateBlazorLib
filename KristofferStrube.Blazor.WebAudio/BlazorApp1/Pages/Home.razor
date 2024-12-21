@@ -10,19 +10,32 @@
 
 <h1>Blazor.WebAudioの確認サンプル</h1>
 
-<button class="media-control btn btn-outline-primary" aria-label="Play" @onclick="RecordOrStop">
+<button class="btn @RecBtnClass" aria-label="Record or Stop" @onclick="RecordOrStop" disabled="@IsPostingRecData" style="box-shadow:none;">
     @if (IsRecording)
     {
         <i class="bi bi-stop-circle"></i>
     }
     else
     {
-        <i class="bi bi-mic"></i>
+        if (IsPostingRecData)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="visually-hidden">Loading...</span>
+        }
+        else
+        {
+            <i class="bi bi-mic"></i>
+        }
     }
 </button>
 
+@* <button class="btn btn-primary" type="button" style="box-shadow:none;">outline</button>
+<button class="btn btn-primary" type="button" style="outline:none">box-shadow</button> *@
 @code {
     private bool IsRecording = false;
+    private string RecBtnClass => IsRecording ? "btn-danger" : "btn-outline-primary";
+
+    private bool IsPostingRecData = false;
     private BasicAudioRecorder _recorder = null!;
 
     private BasicPlayer _player = null!;
@@ -55,10 +68,12 @@
         else
         {
             //TODO: プログレス表示・不活性
-            var wavBytes = await _recorder.StopAsync();
             IsRecording = false;
+            IsPostingRecData = true;
+            var wavBytes = await _recorder.StopAsync();
             await _player.SetSoundAsync(wavBytes);
-            await _player.StartAsync();         
+            await _player.StartAsync();
+            IsPostingRecData = false;
         }
     }
 

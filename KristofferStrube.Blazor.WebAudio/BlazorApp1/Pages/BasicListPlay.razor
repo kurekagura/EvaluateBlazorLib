@@ -15,7 +15,7 @@
     {
         @foreach (var key in _player.Keys.OrderBy(key => int.Parse(key)))
         {
-            <button class="media-control btn btn-outline-primary" aria-label="Play" @onclick="() => PlayOrStop(key)">
+            <button class="btn btn-outline-primary" aria-label="Play" @onclick="() => PlayOrStop(key)">
                 @if (key == PlayingKey)
                 {
                     @* <i class="bi bi-stop-circle-fill"></i> *@
