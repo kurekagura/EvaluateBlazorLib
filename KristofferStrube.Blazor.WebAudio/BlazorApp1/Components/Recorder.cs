@@ -9,14 +9,13 @@ using System.Text;
 
 namespace BlazorApp1.Components;
 
-public class BasicAudioRecorder
+public class AudioRecordContext
 {
     private AudioContext _audCtx = default!;
 
     private readonly IJSRuntime _jsRT;
-    private readonly MediaDevices _mediaDevices;
+    private readonly MediaStream _mediaStream;
 
-    private MediaStream _mediaStream = null!;
     private MediaRecorder _mediaRecorder = null!;
 
     private List<Blob> _blobRecord = [];
@@ -24,10 +23,10 @@ public class BasicAudioRecorder
     private readonly float _sampleRate;
     private bool _recording = false;
 
-    public BasicAudioRecorder(IJSRuntime jsRuntime, MediaDevices mediaDevices, float sampleRate = 16000)
+    public AudioRecordContext(IJSRuntime jsRuntime, MediaStream mediaStream, float sampleRate = 16000)
     {
         _jsRT = jsRuntime;
-        _mediaDevices = mediaDevices;
+        _mediaStream = mediaStream;
         _sampleRate = sampleRate;
     }
 
@@ -42,8 +41,6 @@ public class BasicAudioRecorder
             return;
 
         _audCtx = await AudioContext.CreateAsync(_jsRT, new AudioContextOptions { SampleRate = _sampleRate });
-        var constraints = new MediaTrackConstraints { EchoCancellation = true, NoiseSuppression = true, AutoGainControl = false };
-        _mediaStream = await _mediaDevices.GetUserMediaAsync(new MediaStreamConstraints() { Audio = constraints });
     }
 
     public async Task StartAsync()
@@ -82,9 +79,13 @@ public class BasicAudioRecorder
         {
             //録音を停止
             await _mediaRecorder.StopAsync();
-            _blobRecord.Clear();
-            _blobRecord = null!;
         }
+        _blobRecord.Clear();
+        _blobRecord = null!;
+        await _mediaStream.DisposeAsync();
+
+        if (_mediaRecorder is not null)
+            await _mediaRecorder.DisposeAsync();
         if (_audCtx is not null)
             await _audCtx.DisposeAsync();
     }

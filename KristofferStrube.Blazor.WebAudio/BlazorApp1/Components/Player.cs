@@ -5,18 +5,18 @@ using System.Collections.Concurrent;
 
 namespace BlazorApp1.Components;
 
-public class BasicListPlayer
+public class AudioListPlayer
 {
     private string? _playingIndex = null;
     private readonly ConcurrentDictionary<string, byte[]> _dict = new();
-    private readonly BasicPlayer _player;
+    private readonly PlayAudioContext _player;
 
     public event Action<string>? Ended;
 
-    public BasicListPlayer(IJSRuntime jsRuntime)
+    public AudioListPlayer(IJSRuntime jsRuntime)
     //: base(jsRuntime)
     {
-        _player = new BasicPlayer(jsRuntime);
+        _player = new PlayAudioContext(jsRuntime);
         _player.Ended += OnInternalAudioEnded;
     }
 
@@ -64,7 +64,7 @@ public class BasicListPlayer
     }
 }
 
-public class BasicPlayer
+public class PlayAudioContext
 {
     private AudioContext _audCtx = default!;
     private AudioDestinationNode _audDstNode = default!;
@@ -76,7 +76,7 @@ public class BasicPlayer
 
     public event Action? Ended;
 
-    public BasicPlayer(IJSRuntime jsRuntime)
+    public PlayAudioContext(IJSRuntime jsRuntime)
     {
         _jsRT = jsRuntime;
     }

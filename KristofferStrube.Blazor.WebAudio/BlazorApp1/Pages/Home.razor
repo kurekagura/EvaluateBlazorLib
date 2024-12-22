@@ -36,9 +36,9 @@
     private string RecBtnClass => IsRecording ? "btn-danger" : "btn-outline-primary";
 
     private bool IsPostingRecData = false;
-    private BasicAudioRecorder _recorder = null!;
+    private AudioRecordContext _recorder = null!;
 
-    private BasicPlayer _player = null!;
+    private PlayAudioContext _player = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,10 +46,12 @@
         {
             await JSRuntime.InvokeVoidAsync("eval", @"window.getFloat32Array = (array) => { return Array.from(array); };");
             var mediaDevices = await MediaDevicesService.GetMediaDevicesAsync();
-            _recorder = new BasicAudioRecorder(JSRuntime, mediaDevices);
+            var constraints = new MediaTrackConstraints { EchoCancellation = true, NoiseSuppression = true, AutoGainControl = false };
+            var mediaStream = await mediaDevices.GetUserMediaAsync(new MediaStreamConstraints() { Audio = constraints });
+            _recorder = new AudioRecordContext(JSRuntime, mediaStream);
             await _recorder.EnsureInitializedAsync();
 
-            _player = new BasicPlayer(JSRuntime);
+            _player = new PlayAudioContext(JSRuntime);
             await _player.EnsureInitializedAsync();
         }
         catch (Exception ex)
@@ -81,6 +83,8 @@
     {
         if (_recorder != null)
             await _recorder.DisposeAsync();
+        if (_player != null)
+            await _player.DisposeAsync();
 
         await JSRuntime.InvokeVoidAsync("eval", @"delete window.getFloat32Array;");
     }

@@ -32,14 +32,14 @@
 </div>
 
 @code {
-    private BasicListPlayer _player = default!;
+    private AudioListPlayer _player = default!;
     private string? PlayingKey = null;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _player = new BasicListPlayer(JSRuntime);
+            _player = new AudioListPlayer(JSRuntime);
             _player.Ended += OnAudioEnded;
             await _player.EnsureInitializedAsync();
 

@@ -26,14 +26,14 @@
 </div>
 
 @code {
-    private BasicPlayer _player = default!;
+    private PlayAudioContext _player = default!;
     private bool IsPlaying = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _player = new BasicPlayer(JSRuntime);
+            _player = new PlayAudioContext(JSRuntime);
             _player.Ended += OnAudioEnded;
             await _player.EnsureInitializedAsync();
         }
